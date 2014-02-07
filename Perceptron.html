@@ -103,7 +103,7 @@
 				$('#memorizedNumber').html("");
 
 				for (var index in memory){
-					var html = "<button class='btn btn-default' onclick='loadNumber("+index+")'>"+index+"</button>";
+					var html = "<button class='btn btn-warning' onclick='loadNumber("+index+")'>"+index+"</button>";
 					$('#memorizedNumber').append(html);
 				}
 			}
@@ -206,7 +206,6 @@
 				for (var index in memory) {
 					learnPerceptron(index);
 				};
-				/*console.log(lesPoids);*/
 			}
 
 			function learnXTimes()
@@ -352,8 +351,8 @@
 		    	</div>
 		  	</div>
 		</nav>
-		<div class="row"  style="vertical-align: middle">
-		    <div class="panel panel-default col-md-3 col-md-offset-3">
+		<div class="row" style="max-width: 100%">
+		    <div class="panel panel-default col-md-4 col-md-offset-2" style="min-height: 466px; background-color: rgba(0,0,0,0.8); border-color: black;">
 	  			<div class="panel-body" style="text-align: center">
 					<canvas id="canvas" width="300" height="400">
 						alternate content
@@ -362,31 +361,31 @@
 					</div>
 				</div>
 			</div>
-			<div class="panel panel-default col-md-4">
-				<div class="panel-heading">
-					<h3 class="panel-title">Settings</h3>
+			<div class="panel panel-default col-md-4" style="min-height: 466px; background-color: rgba(0,0,0,0.8); border-color: black;">
+				<div class="panel-heading" style="background-color: rgba(0,0,0,0);">
+					<h3 class="panel-title" style="color: red;">Settings</h3>
 				</div>
 	  			<div class="panel-body">
 	  				<div class="input-group">
-	  					<span class="input-group-addon">Learn rate</span>
-						<input type="number" id="txLearn" onchange="changeTxLearn(this.value)" step="0.1" class="form-control"/>
+	  					<span class="input-group-addon" style="background-color: transparent; color: red;">Learn rate</span>
+						<input type="number" id="txLearn" onchange="changeTxLearn(this.value)" step="0.1" class="form-control" style="background-color: transparent; color: orange"/>
 					</div>
 					<br/>
 					<div class="input-group">
-	  					<span class="input-group-addon">Floor</span>
-						<input type="number" id="seuil" onchange="changeSeuil(this.value)" class="form-control"/>
+	  					<span class="input-group-addon" style="background-color: transparent; color: red;">Floor</span>
+						<input type="number" id="seuil" onchange="changeSeuil(this.value)" class="form-control" style="background-color: transparent; color: orange"/>
 					</div>
 					<br/>
 					<div class="input-group">
 				      <span class="input-group-btn">
 				        <button class="btn btn-success" type="button" onclick="learnClicked()">Learn</button>
 				      </span>
-				      <input type="text" id="inputNumber" class="form-control">
+				      <input type="text" id="inputNumber" class="form-control" style="background-color: transparent; color: orange">
 				    </div>
 				    <br/>
 				    <div class="input-group">
-	  					<span class="input-group-addon">Learn</span>
-						<input type="number" id="XTimes" min="1" value="1" class="form-control"/>
+	  					<span class="input-group-addon" style="background-color: transparent; color: red;">Learn</span>
+						<input type="number" id="XTimes" min="1" value="1" class="form-control" style="background-color: transparent; color: orange"/>
 						<div class="input-group-btn">
 							<button class="btn btn-success" onclick="learnXTimes()">Go!</button>
 							<button class="btn btn-danger" onclick="stop=true;">Stop</button>
@@ -397,13 +396,13 @@
 				      <span class="input-group-btn">
 				        <button class="btn btn-success" type="button" onclick="processClicked()">Process</button>
 				      </span>
-				      <input type="text" id="outputNumber" class="form-control">
+				      <input type="text" id="outputNumber" class="form-control" style="background-color: transparent; color: orange;">
 				    </div>
 				    <br/>
 				    <div class="input-group">
-				    	<span class="input-group-addon">Blur</span>
-				    	<input id="blur" class="form-control" type="range" name="points" min="1" max="4" value="1" onclick="document.getElementById('blurLevel').innerHTML = this.value;">
-				    	<span id="blurLevel" class="input-group-addon">1</span>
+				    	<span class="input-group-addon" style="background-color: transparent; color: red;">Blur</span>
+				    	<input id="blur" class="form-control" type="range" name="points" min="1" max="4" value="1" onclick="document.getElementById('blurLevel').innerHTML = this.value;" style="background-color: transparent;">
+				    	<span id="blurLevel" class="input-group-addon" style="background-color: transparent; color: red;">1</span>
 				    </div>
 				    <br/>
 					<button class="btn btn-danger" type="button" onclick="resetCanvas()">Reset canvas</button>
