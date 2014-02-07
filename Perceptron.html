@@ -1,0 +1,416 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" />
+		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+		<script>
+			var PIXEL_SIZE = 11; //pixels
+
+			var GRID_WIDTH = 0;
+			var GRID_HEIGHT = 0; 
+
+			var OUTPUT_COUNT = 6;
+
+			var stop = false;
+
+			var pixels = [];
+			var lesPoids = [];
+			var numbers = [OUTPUT_COUNT];
+			var taux_app = 0.2;
+			var taux_des = 0.04;
+			var seuil = 0;
+			var memory = [];
+
+			var mousePressed = false;
+			function init() { 
+
+				var canvas = document.getElementById("canvas");
+				GRID_WIDTH = Math.floor(canvas.width/PIXEL_SIZE);	
+				GRID_HEIGHT = Math.floor(canvas.height/PIXEL_SIZE);	
+
+				resetCanvas();
+
+				changeSeuil(parseInt(document.getElementById('blur').value)*Math.sqrt(GRID_HEIGHT*GRID_WIDTH));
+				changeTxLearn(taux_app);
+
+				canvas.addEventListener("click", function(e) {
+					var mousePoint = mouseCanvasPosition(e);
+					togglePixelAtPoint(mousePoint);
+					drawPixels();	
+				});
+
+				canvas.addEventListener("mousedown", function(e) {
+					mousePressed = true;
+				}, false);
+				canvas.addEventListener("mouseup", function(e) {
+					mousePressed = false;
+					blur(parseInt(document.getElementById('blur').value));
+				}, false);		
+
+				canvas.addEventListener("mousemove", function(e) {
+					if(mousePressed) {
+						var mousePoint = mouseCanvasPosition(e);
+						setPixelValueAtPoint(mousePoint, 1);
+						drawPixels();	
+					}
+				})
+
+				// -----
+
+				columns = pixels.length;
+				lines = pixels[0].length;
+				for(var i = 0; i < OUTPUT_COUNT; i++)
+				{
+					lesPoids = [columns];
+					for(var x = 0; x < columns; x++)
+					{
+						lesPoids[x] = [columns];
+						for(var y = 0; y < lines; y++)
+						{
+							lesPoids[x][y] = [OUTPUT_COUNT];
+							for (var n = 0; n < OUTPUT_COUNT; n++) {
+								lesPoids[x][y][n] = 0;	
+							};
+						}
+					}
+				}
+			}
+
+			function learnClicked() {
+				var learnedNumber = parseInt($("#inputNumber").val());
+				learn(learnedNumber);
+				processClicked();
+			}
+
+			function processClicked() {
+				processedNumbers = [];
+
+				processedNumbers = process();
+
+				showProcessedNumbers(processedNumbers);
+			}
+
+			function showProcessedNumbers(processedNumbers) {
+				var result = "";
+				for(var i = 0; i < processedNumbers.length; i++) {
+					result += processedNumbers[i].toString() + ",";
+				}
+				if(result.length > 0) result = result.substring(0, result.length-1);
+				$("#outputNumber").val(result);
+			}
+
+			function initButtonMemorizedNumbers(){
+				$('#memorizedNumber').html("");
+
+				for (var index in memory){
+					var html = "<button class='btn btn-default' onclick='loadNumber("+index+")'>"+index+"</button>";
+					$('#memorizedNumber').append(html);
+				}
+			}
+
+			function loadNumber(number){
+				pixels = jQuery.extend(true, [], memory[number]);
+				drawPixels();
+			}
+
+			function getFrame() {
+				var minHeight = pixels[0].length, maxHeight = 0, minWidth = pixels.length-1, maxWidth = 0;
+				for (var i = 0; i < pixels.length; i++) {
+					for (var j = 0; j < pixels[i].length; j++) {
+						if (pixels[i][j] == 0)
+							continue;
+						if (i < minWidth) {minWidth = i};
+						if (i > maxWidth) {maxWidth = i};
+						if (j < minHeight) {minHeight = j};
+						if (j > maxHeight) {maxHeight = j};
+					};
+				};
+
+				return({minHeight: minHeight, minWidth: minWidth, maxHeight: maxHeight, maxWidth: maxWidth});
+			}
+
+			function moveToCorner() {
+				var frame = getFrame();
+				if(frame.maxWidth < frame.minWidth) {
+					console.error("C'est vide !");
+					return false;
+				}
+				var tmp = [];
+				for (var i = frame.minWidth; i <= frame.maxWidth; i++) {
+					tmp[i-frame.minWidth] = [];
+					for (var j = frame.minHeight; j <= frame.maxHeight; j++) {
+						tmp[i-frame.minWidth][j-frame.minHeight] = pixels[i][j];
+					}
+				}
+				resetPixels();
+				for (var i = 0; i < tmp.length; i++) {
+					for (var j = 0; j < tmp[i].length; j++) {
+						pixels[i][j] = tmp[i][j];
+					};
+				};
+				drawPixels();
+			}
+
+			function blur(level){
+				if (level <= 0)
+					return;
+
+				blur(level-1);
+
+				var tab = []
+				for (var i = 0; i < pixels.length; i++){
+					for (var j = 0; j < pixels[i].length; j++){
+						if (pixels[i][j] == level){
+							tab.push({i: i, j: j});
+						}
+					}
+				}
+
+				for (var i = 0; i < tab.length; i++){
+					var coor = tab[i];
+
+					if(coor.i-1 >= 0 && pixels[coor.i-1][coor.j] == 0)
+						pixels[coor.i-1][coor.j] = level+1;
+
+					if(coor.i+1 < pixels.length && pixels[coor.i+1][coor.j] == 0)
+						pixels[coor.i+1][coor.j] = level+1;
+
+					if(coor.j-1 >= 0 && pixels[coor.i][coor.j-1] == 0)
+						pixels[coor.i][coor.j-1] = level+1;
+
+					if(coor.j+1 < pixels[0].length && pixels[coor.i][coor.j+1] == 0)
+						pixels[coor.i][coor.j+1] = level+1;
+				}
+			}
+
+			function learnPerceptron(n1)
+			{
+				for(var i = 0; i < memory[n1].length; i++)
+				{
+					for(var j = 0; j < memory[n1][i].length; j++)
+					{
+						for (var n = 0; n < OUTPUT_COUNT; n++) {
+							var valAttendue = (n == document.getElementById("inputNumber").value);
+							lesPoids[i][j][n] += (memory[n1][i][j] > 0 ? taux_app/memory[n1][i][j] : taux_des) * (valAttendue - (lesPoids[i][j][n])) * memory[n1][i][j];
+						};
+					}
+				}
+			}
+
+			function learn(number) {
+				moveToCorner();
+				if(memory[number] == undefined) {
+					memory[number] = jQuery.extend(true, [], pixels);
+					initButtonMemorizedNumbers();
+				}
+				for (var index in memory) {
+					learnPerceptron(index);
+				};
+				/*console.log(lesPoids);*/
+			}
+
+			function learnXTimes()
+			{
+				var x = parseInt(document.getElementById("XTimes").value);
+				stop = false;
+				for(var i = 0; i < x; i++)
+				{
+					if(stop)
+						return;
+					learnClicked();
+				}
+			}
+
+			function process() {
+				moveToCorner();
+				var resultat = [];
+				for(var n = 0; n < OUTPUT_COUNT; n++)
+				{
+					var active = 0;
+					for(var i = 0; i < pixels.length; i++)
+					{
+						for(var j = 0; j < pixels[i].length; j++)
+						{
+							active += (pixels[i][j] > 0) * lesPoids[i][j][n];
+						}
+					}
+					if(active >= seuil) {
+						resultat.push(n);
+					}
+				}
+				afficherReponses();
+				return resultat;
+			}
+
+			function changeTxLearn(value){
+				document.getElementById('txLearn').value = value;
+				taux_app = value;
+				taux_des = taux_app / 5;
+			}
+
+			function changeSeuil(value){
+				document.getElementById('seuil').value = value;
+				seuil = value;
+			}
+
+			function afficherReponses()
+			{
+				var cible = $('#reponses');
+
+				cible.html("");
+				for(var n = 0; n < OUTPUT_COUNT; n++)
+				{
+					var active = 0;
+					for(var i = 0; i < pixels.length; i++)
+					{
+						for(var j = 0; j < pixels[i].length; j++)
+						{
+							active += (pixels[i][j] > 0) * lesPoids[i][j][n];
+						}
+					}
+					cible.html(cible.html()+n+" => "+active+"<br />");
+				}
+			}
+
+
+			function mouseCanvasPosition(e) {
+        		var rect = canvas.getBoundingClientRect();
+        		return {
+          			x: e.clientX - rect.left,
+          			y: e.clientY - rect.top
+        		};
+      		}
+
+      		function togglePixelAtPoint(point) {
+      			var x = Math.floor(point.x/PIXEL_SIZE);
+      			var y = Math.floor(point.y/PIXEL_SIZE);
+      			if(x < GRID_WIDTH && y < GRID_HEIGHT) {
+      				pixels[x][y] = (pixels[x][y] > 0)?0:1;      				
+      			}
+      		}
+
+      		function setPixelValueAtPoint(point, value) {
+      			var x = Math.floor(point.x/PIXEL_SIZE);
+      			var y = Math.floor(point.y/PIXEL_SIZE);
+      			if(x < GRID_WIDTH && y < GRID_HEIGHT) {
+      				pixels[x][y] = value;      				
+      			}
+      		}
+
+      		function resetCanvas() {
+      			resetPixels();
+      			drawPixels();
+      		}
+
+      		function resetPixels() {      				
+			for(var x = 0; x < GRID_WIDTH; x++) {
+				pixels[x] = [];
+      			for(var y = 0; y < GRID_HEIGHT; y++) {						
+						pixels[x][y] = 0;
+					}
+				}
+      		}
+
+			function drawPixels() {
+				var canvas = document.getElementById("canvas");
+				var context = canvas.getContext("2d");
+
+				for(var y = 0; y < GRID_HEIGHT; y++) {
+					for(var x = 0; x < GRID_WIDTH; x++) {
+						var color = '#555';
+						context.beginPath();
+						context.rect(x*PIXEL_SIZE, y*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+						if (pixels[x][y] > 0){
+							var green = 'DD';
+							var decimal = parseInt(green, 16);
+							decimal -= (((221 - 119) / parseInt(document.getElementById('blur').value)) * (pixels[x][y]-1));
+							green = decimal;
+							color = '#55'+green.toString(16)+'55';
+						}
+						context.fillStyle = color;
+						context.fill();
+						context.lineWidth = 1;
+						context.strokeStyle = '#000';
+						context.stroke();						
+					}
+				}
+			}
+
+		</script>
+	</head>
+	<body onLoad="init();" style="background-image: url('http://wallpapers.wallbase.cc/rozne/wallpaper-1495894.jpg'); background-size: cover;">
+		<nav class="navbar navbar-inverse" role="navigation">
+		  	<div class="container-fluid">
+		    	<div class="navbar-header">
+		      		<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+		        		<span class="sr-only">Toggle navigation</span>
+		        		<span class="icon-bar"></span>
+		        		<span class="icon-bar"></span>
+		        		<span class="icon-bar"></span>
+		      		</button>
+		      		<a class="navbar-brand" href="#">Perceptron V2.0</a>
+		    	</div>
+		  	</div>
+		</nav>
+		<div class="row"  style="vertical-align: middle">
+		    <div class="panel panel-default col-md-3 col-md-offset-3">
+	  			<div class="panel-body" style="text-align: center">
+					<canvas id="canvas" width="300" height="400">
+						alternate content
+					</canvas>
+					<div id="memorizedNumber">
+					</div>
+				</div>
+			</div>
+			<div class="panel panel-default col-md-4">
+				<div class="panel-heading">
+					<h3 class="panel-title">Settings</h3>
+				</div>
+	  			<div class="panel-body">
+	  				<div class="input-group">
+	  					<span class="input-group-addon">Learn rate</span>
+						<input type="number" id="txLearn" onchange="changeTxLearn(this.value)" step="0.1" class="form-control"/>
+					</div>
+					<br/>
+					<div class="input-group">
+	  					<span class="input-group-addon">Floor</span>
+						<input type="number" id="seuil" onchange="changeSeuil(this.value)" class="form-control"/>
+					</div>
+					<br/>
+					<div class="input-group">
+				      <span class="input-group-btn">
+				        <button class="btn btn-success" type="button" onclick="learnClicked()">Learn</button>
+				      </span>
+				      <input type="text" id="inputNumber" class="form-control">
+				    </div>
+				    <br/>
+				    <div class="input-group">
+	  					<span class="input-group-addon">Learn</span>
+						<input type="number" id="XTimes" min="1" value="1" class="form-control"/>
+						<div class="input-group-btn">
+							<button class="btn btn-success" onclick="learnXTimes()">Go!</button>
+							<button class="btn btn-danger" onclick="stop=true;">Stop</button>
+						</div>
+					</div>
+					<br/>
+					<div class="input-group">
+				      <span class="input-group-btn">
+				        <button class="btn btn-success" type="button" onclick="processClicked()">Process</button>
+				      </span>
+				      <input type="text" id="outputNumber" class="form-control">
+				    </div>
+				    <br/>
+				    <div class="input-group">
+				    	<span class="input-group-addon">Blur</span>
+				    	<input id="blur" class="form-control" type="range" name="points" min="1" max="4" value="1" onclick="document.getElementById('blurLevel').innerHTML = this.value;">
+				    	<span id="blurLevel" class="input-group-addon">1</span>
+				    </div>
+				    <br/>
+					<button class="btn btn-danger" type="button" onclick="resetCanvas()">Reset canvas</button>
+					<!--<div id="reponses" style="border: 2px #000 solid; background: #eee; color: #202; width: 300px; top: 415px; position: absolute; min-height: 30px;">
+					</div>-->
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
