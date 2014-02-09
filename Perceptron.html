@@ -9,12 +9,13 @@
 			var GRID_WIDTH = 0;
 			var GRID_HEIGHT = 0; 
 
-			var OUTPUT_COUNT = 6;
+			var OUTPUT_COUNT = 10;
 
 			var stop = false;
 
 			var pixels = [];
 			var lesPoids = [];
+			var activation = [];
 			var numbers = [OUTPUT_COUNT];
 			var taux_app = 0.2;
 			var taux_des = 0.04;
@@ -55,7 +56,7 @@
 					}
 				})
 
-				// -----
+				resetActivation();
 
 				columns = pixels.length;
 				lines = pixels[0].length;
@@ -78,8 +79,8 @@
 
 			function learnClicked() {
 				var learnedNumber = parseInt($("#inputNumber").val());
-				learn(learnedNumber);
 				processClicked();
+				learn(learnedNumber);
 			}
 
 			function processClicked() {
@@ -191,7 +192,7 @@
 					{
 						for (var n = 0; n < OUTPUT_COUNT; n++) {
 							var valAttendue = (n == document.getElementById("inputNumber").value);
-							lesPoids[i][j][n] += (memory[n1][i][j] > 0 ? taux_app/memory[n1][i][j] : taux_des) * (valAttendue - (lesPoids[i][j][n])) * memory[n1][i][j];
+							lesPoids[i][j][n] += taux_app * (valAttendue - (activation[n] >= seuil)) * (memory[n1][i][j]>0);
 						};
 					}
 				}
@@ -203,9 +204,7 @@
 					memory[number] = jQuery.extend(true, [], pixels);
 					initButtonMemorizedNumbers();
 				}
-				for (var index in memory) {
-					learnPerceptron(index);
-				};
+					learnPerceptron(number);
 			}
 
 			function learnXTimes()
@@ -220,20 +219,25 @@
 				}
 			}
 
+			function resetActivation(){
+				for(var n = 0; n < OUTPUT_COUNT; n++)
+					activation[n] = 0.0
+			}
+
 			function process() {
 				moveToCorner();
 				var resultat = [];
+				resetActivation();
 				for(var n = 0; n < OUTPUT_COUNT; n++)
 				{
-					var active = 0;
 					for(var i = 0; i < pixels.length; i++)
 					{
 						for(var j = 0; j < pixels[i].length; j++)
 						{
-							active += (pixels[i][j] > 0) * lesPoids[i][j][n];
+							activation[n] += (pixels[i][j] > 0) * lesPoids[i][j][n];
 						}
 					}
-					if(active >= seuil) {
+					if(activation[n] >= seuil) {
 						resultat.push(n);
 					}
 				}
