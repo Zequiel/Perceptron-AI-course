@@ -11,14 +11,11 @@
 
 			var OUTPUT_COUNT = 10;
 
-			var stop = false;
-
 			var pixels = [];
 			var lesPoids = [];
 			var activation = [];
 			var numbers = [OUTPUT_COUNT];
-			var taux_app = 0.2;
-			var taux_des = 0.04;
+			var taux_app = 0.01;
 			var seuil = 0;
 			var memory = [];
 
@@ -31,7 +28,7 @@
 
 				resetCanvas();
 
-				changeSeuil(parseInt(document.getElementById('blur').value)*Math.sqrt(GRID_HEIGHT*GRID_WIDTH));
+				changeSeuil(0.8);
 				changeTxLearn(taux_app);
 
 				canvas.addEventListener("click", function(e) {
@@ -210,13 +207,8 @@
 			function learnXTimes()
 			{
 				var x = parseInt(document.getElementById("XTimes").value);
-				stop = false;
 				for(var i = 0; i < x; i++)
-				{
-					if(stop)
-						return;
 					learnClicked();
-				}
 			}
 
 			function resetActivation(){
@@ -392,7 +384,6 @@
 						<input type="number" id="XTimes" min="1" value="1" class="form-control" style="background-color: transparent; color: orange"/>
 						<div class="input-group-btn">
 							<button class="btn btn-success" onclick="learnXTimes()">Go!</button>
-							<button class="btn btn-danger" onclick="stop=true;">Stop</button>
 						</div>
 					</div>
 					<br/>
