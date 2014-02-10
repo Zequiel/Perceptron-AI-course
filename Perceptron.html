@@ -3,6 +3,7 @@
 		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" />
 		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 		<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+		<script src="https://konami-js.googlecode.com/files/konami.1.3.3.js"></script>
 		<script>
 			var PIXEL_SIZE = 11; //pixels
 
@@ -331,6 +332,22 @@
 				}
 			}
 
+			function answer() {
+				var theFloor = parseInt(document.getElementById("seuil").value);
+				if(theFloor == 42)
+					alert("La réponse est 42, mais quelle est la question ?");
+			}
+
+			function glados() {
+				if(alive)
+					window.location = "http://grooveshark.com/s/Still+Alive/3VFtpO?src=5";
+				else
+				{
+					alive = true;
+					$("body").css("background-image", "url('http://wallpapers.wallbase.cc/rozne/wallpaper-1329000.png')");
+				}
+			}
+
 		</script>
 	</head>
 	<body onLoad="init();" style="background-image: url('http://wallpapers.wallbase.cc/rozne/wallpaper-1495894.jpg'); background-size: cover;">
@@ -369,7 +386,7 @@
 					<br/>
 					<div class="input-group">
 	  					<span class="input-group-addon" style="background-color: transparent; color: red;">Floor</span>
-						<input type="number" id="seuil" onchange="changeSeuil(this.value)" class="form-control" style="background-color: transparent; color: orange"/>
+						<input type="number" id="seuil" onchange="changeSeuil(this.value); answer();" class="form-control" style="background-color: transparent; color: orange"/>
 					</div>
 					<br/>
 					<div class="input-group">
